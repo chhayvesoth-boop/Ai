@@ -1,7 +1,8 @@
 const std=@import("std");
 const DBMS=@import("../../DBMS/DBMS.zig");
+const kernel =@import("../../config/config.zig").loadkernel;
 
-pub fn module() !void {
+pub fn run() !void {
 
     var buff_in:[1024]u8=undefined;
     var buff_out:[1024]u8=undefined;
@@ -15,7 +16,11 @@ pub fn module() !void {
     var stdout_writer=std.Io.File.stdout().writerStreaming(io,&buff_out);// write data to bus
     const stdout: *std.Io.Writer = &stdout_writer.interface;//take writer fn
 
-    try stdout.writeAll("hello world!");
+    var loadgpu = try kernel.checkaviable.load();
+    defer loadgpu.deinit();
+    std.debug.print("{}\n",.{loadgpu.cuInit(0)});
+
+    try stdout.writeAll("hello");
     try stdout.flush();
 
 

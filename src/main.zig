@@ -1,7 +1,6 @@
 const std = @import("std");
 const Io = std.Io;
 const model = @import("model/model.zig");
-const dpmodual = @import("model/deeplearing/deeplearning.zig");
 const Ai = @import("Ai");
 
 pub fn main(init: std.process.Init) !void {
@@ -16,7 +15,7 @@ pub fn main(init: std.process.Init) !void {
         std.log.info("arg: {s}", .{arg});
     }
 
-    try dpmodual.module();
+    try model.deeplearining.run();
 
 }
 
