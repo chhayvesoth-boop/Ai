@@ -1,1 +1,1 @@
-pub const deeplearining= @import("deeplearing/deeplearning.zig");
+pub const trash= @import("deeplearing/deeplearning.zig");

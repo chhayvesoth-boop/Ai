@@ -38,9 +38,10 @@ pub const KernelGenerator = struct {
         var reg_buf: [256]u8 = undefined;
         const reg_directives = try self.allocator.injectRegDirectives(&reg_buf);
 
-        return try std.fmt.bufPrint(buf,
-            \\.version 8.0
-            \\.target sm_80
+        var writer: std.Io.Writer = .fixed(buf);
+        try writer.print(
+            \\.version 7.0
+            \\.target sm_75
             \\.address_size 64
             \\
             \\.visible .entry {s}(
@@ -86,6 +87,8 @@ pub const KernelGenerator = struct {
             \\    ret;
             \\}}
         , .{ kernel_name, reg_directives, op.asString(), op.ptxMnemonic() });
+
+        return writer.buffered();
     }
 };
 
@@ -94,4 +97,5 @@ test "operator generation" {
     var buf: [2048]u8 = undefined;
     const ptx = try gen.emitArbitraryNDKernel(&buf, "test_tensor", .mul);
     try std.testing.expect(std.mem.indexOf(u8, ptx, "mul.f32") != null);
+    std.debug.print("{s}",.{ptx});
 }

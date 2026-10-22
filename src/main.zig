@@ -15,7 +15,7 @@ pub fn main(init: std.process.Init) !void {
         std.log.info("arg: {s}", .{arg});
     }
 
-    try model.deeplearining.run();
+        try model.trash.run();
 
 }
 

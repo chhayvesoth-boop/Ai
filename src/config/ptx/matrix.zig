@@ -19,25 +19,36 @@ pub const NDMatrix = struct {
         }
         return total;
     }
+    pub const BuiltKernel = struct {
+        kername: [:0]const u8,
+        ptx: [:0]const u8,
+    };
 
     /// Dynamically injects shape metadata into kernel name and emits PTX
-    pub fn buildDynamicKernel(self: NDMatrix, ptx_buffer: []u8, op: OpKind) ![]const u8 {
-        var name_buf: [128]u8 = undefined;
-        var stream = std.io.fixedBufferStream(&name_buf);
-        const writer = stream.writer();
+    pub fn buildDynamicKernel(self: NDMatrix, ptx_buffer: []u8, op: OpKind) !BuiltKernel {
+        const name_space = ptx_buffer[0..128];
+        const ptx_space = ptx_buffer[128..];
 
-        // Generates: ndmat_{op}_{dims_count}d_{d0}x{d1}x...
+        var writer: std.Io.Writer = .fixed(name_space);
+
         try writer.print("ndmat_{s}_{d}d", .{ op.asString(), self.shape.len });
         for (self.shape) |dim| {
             try writer.print("x{d}", .{dim});
         }
-        const kernel_name = stream.getWritten();
+        const raw_name = writer.buffered();
+        name_space[raw_name.len] = 0; // Null-terminate kernel name
 
         const total = self.totalElements();
         const reg_count: u32 = if (total > 2048) 64 else 32;
 
         const generator = KernelGenerator.init(reg_count);
-        return try generator.emitArbitraryNDKernel(ptx_buffer, kernel_name, op);
+        const raw_ptx = try generator.emitArbitraryNDKernel(ptx_space, raw_name, op);
+        ptx_space[raw_ptx.len] = 0; // Null-terminate PTX string
+
+        return .{
+            .kername = name_space[0..raw_name.len :0],
+            .ptx = ptx_space[0..raw_ptx.len :0],
+        };
     }
 };
 
@@ -52,9 +63,9 @@ test "arbitrary n-dimensional matrix kernel" {
     const ptx = try mat5d.buildDynamicKernel(&buffer, .mul);
 
     // Verify name generation and single result parameter
-    try std.testing.expect(std.mem.indexOf(u8, ptx, "ndmat_mul_5dx2x3x4x5x6") != null);
-    try std.testing.expect(std.mem.indexOf(u8, ptx, ".param .u64 param_out") != null);
-    try std.testing.expect(std.mem.indexOf(u8, ptx, "mul.f32") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ptx.ptx, "ndmat_mul_5dx2x3x4x5x6") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ptx.ptx, ".param .u64 param_out") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ptx.ptx, "mul.f32") != null);
 
-    std.debug.print("\n--- Generated N-D PTX Kernel ---\n{s}\n", .{ptx});
+    std.debug.print("\n--- Generated N-D PTX Kernel ---\n{s}\n", .{ptx.ptx});
 }
