@@ -14,7 +14,7 @@ pub const Matrix = struct {
 
         const file = try std.Io.Dir.cwd().createFile(io, path, .{
             .read = true,
-            .truncate = false,
+            .truncate = false, // <-- MUST BE FALSE so restarting Ai.exe keeps your saved data!
         });
         return .{ .file = file, .cols = cols };
     }

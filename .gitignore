@@ -1,3 +1,6 @@
-data
+data/*
+!data/learn data/
+data/learn data/*
+!data/learn data/everyday_human.md
 .zig-cache
 zig-out
