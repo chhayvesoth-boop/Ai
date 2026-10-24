@@ -144,6 +144,13 @@ pub const RelationDB = struct {
                     break;
                 }
             }
+            // Ensure we matched the full word (next cell in DB is space 32.0 or 0.0)
+            if (matches and len < self.cols) {
+                const next_cell = try self.inputs.get(io, row_id, len);
+                if (next_cell != 32.0 and next_cell != 0.0) {
+                    matches = false;
+                }
+            }
             if (matches) return row_id;
         }
         return null;
